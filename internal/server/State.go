@@ -1,4 +1,6 @@
 package server
 
-var rooms = map[string]Room{}
-var players = map[string]Player{}
+import "game-server/internal/server/Types"
+
+var Rooms = map[string]Types.Room{}
+var players = map[string]Types.Player{}

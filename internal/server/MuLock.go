@@ -2,5 +2,5 @@ package server
 
 import "sync"
 
-// mutex synchro
-var mu sync.RWMutex
+// Mu mutex synchro
+var Mu sync.RWMutex

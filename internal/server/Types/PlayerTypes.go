@@ -1,4 +1,4 @@
-package server
+package Types
 
 type Player struct {
 	ID       string

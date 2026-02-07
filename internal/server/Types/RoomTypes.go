@@ -1,4 +1,4 @@
-package server
+package Types
 
 type Room struct {
 	ID        string   `json:"id"`
@@ -6,11 +6,11 @@ type Room struct {
 	PlayerIDs []string `json:"playerIds"`
 }
 
-type joinRoomRequest struct {
+type JoinRoomRequest struct {
 	RoomID   string `json:"roomId"`
 	PlayerID string `json:"playerId"`
 }
 
-type createRoomRequest struct {
+type CreateRoomRequest struct {
 	Name string
 }

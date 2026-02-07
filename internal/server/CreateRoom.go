@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"game-server/internal/server/Types"
 	"net/http"
 	"strings"
 )
@@ -15,7 +16,7 @@ func CreateRoom() {
 			return
 		}
 
-		var req createRoomRequest
+		var req Types.CreateRoomRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_, _ = fmt.Fprintln(w, "Invalid request body")
@@ -36,12 +37,12 @@ func CreateRoom() {
 			return
 		}
 
-		room := Room{ID: id, Name: req.Name, PlayerIDs: []string{}}
+		room := Types.Room{ID: id, Name: req.Name, PlayerIDs: []string{}}
 
 		// synchronized add to rooms map
-		mu.Lock()
-		rooms[id] = room
-		mu.Unlock()
+		Mu.Lock()
+		Rooms[id] = room
+		Mu.Unlock()
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)

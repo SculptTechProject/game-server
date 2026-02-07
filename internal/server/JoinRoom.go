@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"game-server/internal/server/Types"
 	"net/http"
 )
 
@@ -14,7 +15,7 @@ func JoinRoom() {
 			return
 		}
 
-		var req joinRoomRequest
+		var req Types.JoinRoomRequest
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -28,10 +29,10 @@ func JoinRoom() {
 			return
 		}
 
-		mu.Lock()
-		room, ok := rooms[req.RoomID]
+		Mu.Lock()
+		room, ok := Rooms[req.RoomID]
 		if !ok {
-			mu.Unlock()
+			Mu.Unlock()
 			w.WriteHeader(http.StatusNotFound)
 			_, _ = fmt.Fprintf(w, "Room not found: %s\n", req.RoomID)
 			return
@@ -49,8 +50,8 @@ func JoinRoom() {
 			room.PlayerIDs = append(room.PlayerIDs, req.PlayerID)
 		}
 
-		rooms[req.RoomID] = room
-		mu.Unlock()
+		Rooms[req.RoomID] = room
+		Mu.Unlock()
 
 		w.WriteHeader(http.StatusOK)
 		_, _ = fmt.Fprintln(w, "Player joined the room")

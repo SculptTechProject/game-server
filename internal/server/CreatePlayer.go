@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"game-server/internal/server/Types"
 	"net/http"
 	"strings"
 )
@@ -15,7 +16,7 @@ func CreatePlayer() {
 			return
 		}
 
-		var req CreatePlayerRequest
+		var req Types.CreatePlayerRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_, _ = fmt.Fprintln(w, "Invalid request body")
@@ -34,11 +35,11 @@ func CreatePlayer() {
 			_, _ = fmt.Fprintln(w, "Could not generate player id")
 		}
 
-		player := Player{ID: id, Nickname: req.Nickname}
+		player := Types.Player{ID: id, Nickname: req.Nickname}
 
-		mu.Lock()
+		Mu.Lock()
 		players[id] = player
-		mu.Unlock()
+		Mu.Unlock()
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
