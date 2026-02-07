@@ -15,7 +15,7 @@ func CreatePlayer() {
 			return
 		}
 
-		var req main.CreatePlayerRequest
+		var req CreatePlayerRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_, _ = fmt.Fprintln(w, "Invalid request body")
@@ -34,7 +34,7 @@ func CreatePlayer() {
 			_, _ = fmt.Fprintln(w, "Could not generate player id")
 		}
 
-		player := main.Player{ID: id, Nickname: req.Nickname}
+		player := Player{ID: id, Nickname: req.Nickname}
 
 		mu.Lock()
 		players[id] = player
