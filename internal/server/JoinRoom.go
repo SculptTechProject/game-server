@@ -22,6 +22,12 @@ func JoinRoom() {
 			return
 		}
 
+		if req.RoomID == "" || req.PlayerID == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = fmt.Fprintln(w, "RoomID and PlayerID are required")
+			return
+		}
+
 		mu.Lock()
 		room, ok := rooms[req.RoomID]
 		if !ok {
