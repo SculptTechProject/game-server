@@ -6,5 +6,6 @@ func EndpointHandler() {
 
 	// Rooms
 	CreateRoom()
+	GetRoom()
 	JoinRoom()
 }

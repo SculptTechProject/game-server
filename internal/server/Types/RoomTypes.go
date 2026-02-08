@@ -14,3 +14,7 @@ type JoinRoomRequest struct {
 type CreateRoomRequest struct {
 	Name string
 }
+
+type GetRoomRequest struct {
+	RoomID string
+}
