@@ -1,4 +1,4 @@
-package Types
+package domain
 
 type Room struct {
 	ID        string   `json:"id"`

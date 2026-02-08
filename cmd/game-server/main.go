@@ -7,6 +7,7 @@ package main
 
 import (
 	"game-server/internal/server"
+	http2 "game-server/internal/server/api/http"
 	"net/http"
 
 	_ "game-server/docs"
@@ -15,7 +16,7 @@ import (
 )
 
 func main() {
-	server.EndpointHandler() // handle endpoints and logic
+	http2.RegisterRoutes() // handle endpoints and logic
 
 	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 

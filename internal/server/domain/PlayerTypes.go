@@ -1,4 +1,4 @@
-package Types
+package domain
 
 type Player struct {
 	ID       string `json:"id"`
@@ -8,4 +8,8 @@ type Player struct {
 
 type CreatePlayerRequest struct {
 	Nickname string `json:"nickname"`
+}
+
+type GetPlayerRequest struct {
+	ID string `json:"id"`
 }
