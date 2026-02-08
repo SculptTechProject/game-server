@@ -7,6 +7,17 @@ import (
 	"net/http"
 )
 
+// JoinRoom godoc
+// @Summary Join room
+// @Description Adds player to room if not already present
+// @Tags rooms
+// @Accept json
+// @Produce plain
+// @Param body body Types.JoinRoomRequest true "Join room request"
+// @Success 200 {string} string
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Router /join-room [post]
 func JoinRoom() {
 	http.HandleFunc("/join-room", func(w http.ResponseWriter, r *http.Request) {
 		// check if method is post

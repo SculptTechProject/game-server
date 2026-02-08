@@ -12,9 +12,9 @@ type JoinRoomRequest struct {
 }
 
 type CreateRoomRequest struct {
-	Name string
+	Name string `json:"name"`
 }
 
 type GetRoomRequest struct {
-	RoomID string
+	RoomID string `json:"roomId"`
 }

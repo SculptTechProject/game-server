@@ -8,6 +8,17 @@ import (
 	"strings"
 )
 
+// CreatePlayer godoc
+// @Summary Create a new player
+// @Description Creates a player with a nickname and returns the created player (with generated id)
+// @Tags players
+// @Accept json
+// @Produce json
+// @Param body body Types.CreatePlayerRequest true "Create player request"
+// @Success 201 {object} Types.Player
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /create-player [post]
 func CreatePlayer() {
 	http.HandleFunc("/create-player", func(w http.ResponseWriter, r *http.Request) {
 		// check if method is post
@@ -20,6 +31,7 @@ func CreatePlayer() {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_, _ = fmt.Fprintln(w, "Invalid request body")
+			return
 		}
 
 		req.Nickname = strings.TrimSpace(req.Nickname)
@@ -33,6 +45,7 @@ func CreatePlayer() {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			_, _ = fmt.Fprintln(w, "Could not generate player id")
+			return
 		}
 
 		player := Types.Player{ID: id, Nickname: req.Nickname}

@@ -7,6 +7,16 @@ import (
 	"strings"
 )
 
+// GetRoom godoc
+// @Summary Get room
+// @Description Returns room details by roomId
+// @Tags rooms
+// @Produce json
+// @Param roomId query string true "Room ID"
+// @Success 200 {object} Types.Room
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Router /get-room [get]
 func GetRoom() {
 	http.HandleFunc("/get-room", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

@@ -8,6 +8,17 @@ import (
 	"strings"
 )
 
+// CreateRoom godoc
+// @Summary Create a new room
+// @Description Creates a new room and returns its ID
+// @Tags rooms
+// @Accept json
+// @Produce json
+// @Param body body Types.CreateRoomRequest true "Create room request"
+// @Success 201 {object} Types.Room
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /create-room [post]
 func CreateRoom() {
 	http.HandleFunc("/create-room", func(w http.ResponseWriter, r *http.Request) {
 		// check if method is post
