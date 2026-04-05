@@ -1,0 +1,192 @@
+basePath: /
+definitions:
+  domain.CreatePlayerRequest:
+    properties:
+      nickname:
+        type: string
+    type: object
+  domain.CreateRoomRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  domain.JoinRoomRequest:
+    properties:
+      playerId:
+        type: string
+      roomId:
+        type: string
+    type: object
+  domain.Player:
+    properties:
+      hp:
+        type: integer
+      id:
+        type: string
+      nickname:
+        type: string
+    type: object
+  domain.Room:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      playerIds:
+        items:
+          type: string
+        type: array
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Simple game lobby server (rooms & players)
+  title: Game Server API
+  version: "1.0"
+paths:
+  /create-player:
+    post:
+      consumes:
+      - application/json
+      description: Creates a player with a nickname and returns the created player
+        (with generated id)
+      parameters:
+      - description: Create player request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreatePlayerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Player'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new player
+      tags:
+      - players
+  /create-room:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new room and returns its ID
+      parameters:
+      - description: Create room request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateRoomRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Room'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new room
+      tags:
+      - rooms
+  /get-player:
+    get:
+      description: Returns player details by playerId
+      parameters:
+      - description: Player ID
+        in: query
+        name: playerId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Player'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get player
+      tags:
+      - players
+  /get-room:
+    get:
+      description: Returns room details by roomId
+      parameters:
+      - description: Room ID
+        in: query
+        name: roomId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Room'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get room
+      tags:
+      - rooms
+  /join-room:
+    post:
+      consumes:
+      - application/json
+      description: Adds player to room if not already present
+      parameters:
+      - description: Join room request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.JoinRoomRequest'
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Join room
+      tags:
+      - rooms
+swagger: "2.0"
