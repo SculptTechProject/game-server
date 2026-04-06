@@ -1,9 +1,10 @@
 package domain
 
 type Room struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	PlayerIDs []string `json:"playerIds"`
+	ID         string   `json:"id"`
+	Name       string   `json:"name"`
+	PlayerIDs  []string `json:"playerIds"`
+	MaxPlayers int      `json:"max-players"`
 }
 
 type JoinRoomRequest struct {
@@ -12,7 +13,8 @@ type JoinRoomRequest struct {
 }
 
 type CreateRoomRequest struct {
-	Name string `json:"name"`
+	Name       string `json:"name"`
+	MaxPlayers int    `json:"max-players"`
 }
 
 type GetRoomRequest struct {

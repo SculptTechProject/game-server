@@ -49,7 +49,7 @@ func CreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	room := domain.Room{ID: id, Name: req.Name, PlayerIDs: []string{}}
+	room := domain.Room{ID: id, Name: req.Name, PlayerIDs: []string{}, MaxPlayers: req.MaxPlayers}
 
 	// synchronized add to rooms map
 	Mu.Lock()
@@ -109,6 +109,7 @@ func GetRoom(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {string} string
 // @Failure 400 {string} string
 // @Failure 404 {string} string
+// @Failure 409 {string} string
 // @Router /join-room [post]
 func JoinRoom(w http.ResponseWriter, r *http.Request) {
 	// check if method is post
@@ -140,7 +141,7 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// add player to room if not already present
+	// check if player is already in room
 	alreadyInRoom := false
 	for _, pid := range room.PlayerIDs {
 		if pid == req.PlayerID {
@@ -148,9 +149,22 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	if !alreadyInRoom {
-		room.PlayerIDs = append(room.PlayerIDs, req.PlayerID)
+
+	if alreadyInRoom {
+		Mu.Unlock()
+		w.WriteHeader(http.StatusConflict)
+		_, _ = fmt.Fprintln(w, "Player is already in the room")
+		return
 	}
+
+	if room.MaxPlayers > 0 && len(room.PlayerIDs) >= room.MaxPlayers {
+		Mu.Unlock()
+		w.WriteHeader(http.StatusConflict)
+		_, _ = fmt.Fprintln(w, "Room is full")
+		return
+	}
+
+	room.PlayerIDs = append(room.PlayerIDs, req.PlayerID)
 
 	store.Rooms[req.RoomID] = room
 	Mu.Unlock()
