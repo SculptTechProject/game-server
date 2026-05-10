@@ -2,7 +2,7 @@ package id
 
 import "github.com/google/uuid"
 
-func GenerateUniqeID() (string, error) {
+func GenerateUniqueID() (string, error) {
 	id := uuid.New()
 	return id.String(), nil
 }
