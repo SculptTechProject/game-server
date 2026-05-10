@@ -24,6 +24,8 @@ type Hub struct {
 	mu              sync.RWMutex
 	playerPositions map[string]map[string]PlayerPos
 	posMu           sync.RWMutex
+	nicknames       map[string]map[string]string
+	nickMu          sync.RWMutex
 }
 
 func NewHub() *Hub {
@@ -33,6 +35,7 @@ func NewHub() *Hub {
 		register:        make(chan *Client),
 		unregister:      make(chan *Client),
 		playerPositions: make(map[string]map[string]PlayerPos),
+		nicknames:       make(map[string]map[string]string),
 	}
 }
 
@@ -50,12 +53,19 @@ func (h *Hub) Run(ctx context.Context, rdb *redis.Client) {
 			h.rooms[client.RoomID][client] = true
 			h.mu.Unlock()
 
-			h.sendRoomState(client)
-
 			nickname := client.Nickname
 			if nickname == "" {
 				nickname = client.PlayerID
 			}
+			h.nickMu.Lock()
+			if h.nicknames[client.RoomID] == nil {
+				h.nicknames[client.RoomID] = make(map[string]string)
+			}
+			h.nicknames[client.RoomID][client.PlayerID] = nickname
+			h.nickMu.Unlock()
+
+			h.sendRoomState(client)
+
 			h.BroadcastToRoom(client.RoomID, domain.Event{
 				Type:      domain.EventPlayerJoined,
 				RoomID:    client.RoomID,
@@ -74,6 +84,13 @@ func (h *Hub) Run(ctx context.Context, rdb *redis.Client) {
 						h.posMu.Lock()
 						delete(h.playerPositions, client.RoomID)
 						h.posMu.Unlock()
+						h.nickMu.Lock()
+						delete(h.nicknames, client.RoomID)
+						h.nickMu.Unlock()
+					} else {
+						h.nickMu.Lock()
+						delete(h.nicknames[client.RoomID], client.PlayerID)
+						h.nickMu.Unlock()
 					}
 				}
 				close(client.Send)
@@ -99,10 +116,23 @@ func (h *Hub) sendRoomState(client *Client) {
 		return
 	}
 
+	h.nickMu.RLock()
+	nicks := h.nicknames[client.RoomID]
+	h.nickMu.RUnlock()
+
+	if len(nicks) <= 1 {
+		return
+	}
+
+	payload := map[string]interface{}{
+		"positions": positions,
+		"nicknames": nicks,
+	}
+
 	event := domain.Event{
 		Type:      domain.EventRoomState,
 		RoomID:    client.RoomID,
-		Payload:   positions,
+		Payload:   payload,
 		Timestamp: time.Now(),
 	}
 

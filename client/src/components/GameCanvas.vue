@@ -190,18 +190,16 @@ export default defineComponent({
         ctx.stroke()
 
         // Eyes
-        if (isLocal) {
-          ctx.fillStyle = "#fff"
-          ctx.beginPath()
-          ctx.arc(pos.x - 6, pos.y - 4, 4, 0, Math.PI * 2)
-          ctx.arc(pos.x + 6, pos.y - 4, 4, 0, Math.PI * 2)
-          ctx.fill()
-          ctx.fillStyle = "#222"
-          ctx.beginPath()
-          ctx.arc(pos.x - 5, pos.y - 3, 2, 0, Math.PI * 2)
-          ctx.arc(pos.x + 7, pos.y - 3, 2, 0, Math.PI * 2)
-          ctx.fill()
-        }
+        ctx.fillStyle = "#fff"
+        ctx.beginPath()
+        ctx.arc(pos.x - 6, pos.y - 4, 4, 0, Math.PI * 2)
+        ctx.arc(pos.x + 6, pos.y - 4, 4, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = "#222"
+        ctx.beginPath()
+        ctx.arc(pos.x - 5, pos.y - 3, 2, 0, Math.PI * 2)
+        ctx.arc(pos.x + 7, pos.y - 3, 2, 0, Math.PI * 2)
+        ctx.fill()
 
         // Nickname
         ctx.fillStyle = "#fff"
@@ -367,6 +365,9 @@ export default defineComponent({
 
       ws.on("player_moved", (ev) => {
         const pl = ev.payload as MovePayload
+        if (ev.playerId !== props.playerId) {
+          spawnParticles(pl.x, pl.y, 1)
+        }
         players.value = { ...players.value, [ev.playerId!]: { x: pl.x, y: pl.y } }
       })
 
@@ -383,11 +384,14 @@ export default defineComponent({
       })
 
       ws.on("room_state", (ev) => {
-        const positions = ev.payload as PlayerPositions
-        if (positions) {
-          for (const [pid, pos] of Object.entries(positions)) {
+        const pl = ev.payload as any
+        if (pl?.positions) {
+          for (const [pid, pos] of Object.entries(pl.positions)) {
             players.value = { ...players.value, [pid]: pos }
           }
+        }
+        if (pl?.nicknames) {
+          nicknames.value = { ...nicknames.value, ...pl.nicknames }
         }
       })
 

@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,16 +11,23 @@ import (
 	"testing"
 	"time"
 
+	"game-server/internal/server/domain"
 	"game-server/internal/service"
 	"game-server/internal/store"
 )
 
-func BenchmarkAll(b *testing.B) {
+type benchEnv struct {
+	server *httptest.Server
+	client *http.Client
+	body   []byte
+	room   []byte
+}
+
+func newBenchEnv() *benchEnv {
 	s := store.NewMemoryStore()
 	svcs := service.NewServices(s, nil)
 	h := &Handler{Services: svcs}
 	server := httptest.NewServer(h.SetupHandler())
-	defer server.Close()
 
 	tr := &http.Transport{
 		MaxIdleConns:        1000,
@@ -28,26 +36,40 @@ func BenchmarkAll(b *testing.B) {
 		DisableCompression:  true,
 	}
 	client := &http.Client{Transport: tr}
-	defer tr.CloseIdleConnections()
 
-	post := func(url string, body []byte) (*http.Response, error) {
-		return client.Post(server.URL+url, "application/json", bytes.NewReader(body))
+	return &benchEnv{
+		server: server,
+		client: client,
+		body:   []byte(`{"nickname":"benchmark"}`),
+		room:   []byte(`{"name":"bench-room","max-players":1000}`),
 	}
-	get := func(url string) (*http.Response, error) {
-		return client.Get(server.URL + url)
-	}
-	drain := func(resp *http.Response) {
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
-	}
+}
 
-	body := []byte(`{"nickname":"benchmark"}`)
-	roomBody := []byte(`{"name":"bench-room","max-players":1000}`)
+func (e *benchEnv) close() {
+	e.client.Transport.(*http.Transport).CloseIdleConnections()
+	e.server.Close()
+}
 
+func (e *benchEnv) post(url string, body []byte) (*http.Response, error) {
+	return e.client.Post(e.server.URL+url, "application/json", bytes.NewReader(body))
+}
+
+func (e *benchEnv) get(url string) (*http.Response, error) {
+	return e.client.Get(e.server.URL + url)
+}
+
+func drain(resp *http.Response) {
+	io.Copy(io.Discard, resp.Body)
+	resp.Body.Close()
+}
+
+func BenchmarkAll(b *testing.B) {
 	b.Run("CreatePlayer", func(b *testing.B) {
+		e := newBenchEnv()
+		defer e.close()
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			resp, err := post("/create-player", body)
+			resp, err := e.post("/create-player", e.body)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -59,9 +81,11 @@ func BenchmarkAll(b *testing.B) {
 	})
 
 	b.Run("GetPlayer", func(b *testing.B) {
+		e := newBenchEnv()
+		defer e.close()
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			resp, err := get("/get-player?playerId=nonexistent")
+			resp, err := e.get("/get-player?playerId=nonexistent")
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -70,9 +94,16 @@ func BenchmarkAll(b *testing.B) {
 	})
 
 	b.Run("CreateRoom", func(b *testing.B) {
+		e := newBenchEnv()
+		defer e.close()
+		// Limit iterations to stay within the ~9000 room code space
+		maxOps := 4000
+		if b.N < maxOps {
+			maxOps = b.N
+		}
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			resp, err := post("/create-room", roomBody)
+		for i := 0; i < maxOps; i++ {
+			resp, err := e.post("/create-room", e.room)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -84,15 +115,22 @@ func BenchmarkAll(b *testing.B) {
 	})
 
 	b.Run("JoinRoom", func(b *testing.B) {
-		resp, _ := post("/create-room", []byte(`{"name":"bench-room2","max-players":1000}`))
-		drain(resp)
-		resp, _ = post("/create-player", []byte(`{"nickname":"bench"}`))
+		e := newBenchEnv()
+		defer e.close()
+
+		resp, _ := e.post("/create-room", []byte(`{"name":"bench-room2","max-players":1000}`))
+		var roomResp domain.Room
+		json.NewDecoder(resp.Body).Decode(&roomResp)
+		resp.Body.Close()
+		roomCode := roomResp.ID
+
+		resp, _ = e.post("/create-player", []byte(`{"nickname":"bench"}`))
 		drain(resp)
 
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			jbody := []byte(fmt.Sprintf(`{"roomId":"bench-room2","playerId":"bench-p%d"}`, i))
-			resp, err := post("/join-room", jbody)
+			jbody := []byte(fmt.Sprintf(`{"roomId":"%s","playerId":"bench-p%d"}`, roomCode, i))
+			resp, err := e.post("/join-room", jbody)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -101,6 +139,8 @@ func BenchmarkAll(b *testing.B) {
 	})
 
 	b.Run("Concurrent", func(b *testing.B) {
+		e := newBenchEnv()
+		defer e.close()
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var wg sync.WaitGroup
@@ -108,7 +148,7 @@ func BenchmarkAll(b *testing.B) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					resp, err := post("/create-player", body)
+					resp, err := e.post("/create-player", e.body)
 					if err != nil {
 						b.Error(err)
 						return
