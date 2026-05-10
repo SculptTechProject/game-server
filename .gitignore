@@ -29,4 +29,9 @@ go.work.sum
 
 # Editor/IDE
  .idea/
- .vscode/
+ .vscode/!/client/dist/
+
+!/client/node_modules/
+!/client/
+/client/dist/
+/client/node_modules/

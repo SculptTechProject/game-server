@@ -26,7 +26,7 @@ func (h *Handler) SetupHandler() http.Handler {
 	mux.HandleFunc("/ws", h.ServeWS)
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
-	return middleware.Recovery(middleware.Logging(mux))
+	return middleware.CORS(middleware.Recovery(middleware.Logging(mux)))
 }
 
 func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {

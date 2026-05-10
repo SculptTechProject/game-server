@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"game-server/internal/server/domain"
@@ -42,6 +43,9 @@ func (s *MemoryStore) GetPlayer(_ context.Context, id string) (domain.Player, er
 func (s *MemoryStore) CreateRoom(_ context.Context, room domain.Room) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if _, ok := s.rooms[room.ID]; ok {
+		return fmt.Errorf("room %s already exists", room.ID)
+	}
 	s.rooms[room.ID] = room
 	return nil
 }

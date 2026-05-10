@@ -10,14 +10,16 @@ const (
 	writeWait      = 10 * time.Second
 	pongWait       = 60 * time.Second
 	pingPeriod     = (pongWait * 9) / 10
-	maxMessageSize = 512
+	maxMessageSize = 4096
 )
 
 type Client struct {
-	Hub    *Hub
-	Conn   *websocket.Conn
-	Send   chan []byte
-	RoomID string
+	Hub      *Hub
+	Conn     *websocket.Conn
+	Send     chan []byte
+	RoomID   string
+	PlayerID string
+	Nickname string
 }
 
 func (c *Client) ReadPump() {
@@ -34,10 +36,11 @@ func (c *Client) ReadPump() {
 	})
 
 	for {
-		_, _, err := c.Conn.ReadMessage()
+		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
 			break
 		}
+		c.Hub.HandleMessage(c, message)
 	}
 }
 

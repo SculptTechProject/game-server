@@ -17,6 +17,8 @@ var upgrader = websocket.Upgrader{
 
 func ServeWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	roomID := r.URL.Query().Get("roomId")
+	playerID := r.URL.Query().Get("playerId")
+	nickname := r.URL.Query().Get("nickname")
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -25,10 +27,12 @@ func ServeWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := &Client{
-		Hub:    hub,
-		Conn:   conn,
-		Send:   make(chan []byte, 256),
-		RoomID: roomID,
+		Hub:      hub,
+		Conn:     conn,
+		Send:     make(chan []byte, 256),
+		RoomID:   roomID,
+		PlayerID: playerID,
+		Nickname: nickname,
 	}
 
 	hub.register <- client

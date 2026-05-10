@@ -25,29 +25,43 @@ func (svc *RoomService) CreateRoom(ctx context.Context, name string, maxPlayers 
 		return nil, error_handling.BadRequestError("Room name is required")
 	}
 
-	roomID, err := id.GenerateUniqueID()
-	if err != nil {
-		return nil, error_handling.InternalErrorWrap("Could not generate room ID", err)
+	var room domain.Room
+	for i := 0; i < 20; i++ {
+		code := id.GenerateRoomCode()
+
+		// Check if code is already taken
+		_, err := svc.store.GetRoom(ctx, code)
+		if err == nil {
+			continue
+		}
+		if !errors.Is(err, store.ErrNotFound) {
+			return nil, error_handling.InternalErrorWrap("Could not check room code", err)
+		}
+
+		room = domain.Room{
+			ID:         code,
+			Name:       name,
+			PlayerIDs:  []string{},
+			MaxPlayers: maxPlayers,
+		}
+
+		if err := svc.store.CreateRoom(ctx, room); err != nil {
+			if strings.Contains(err.Error(), "already exists") {
+				continue
+			}
+			return nil, error_handling.InternalErrorWrap("Could not create room", err)
+		}
+
+		svc.publishEvent(ctx, domain.Event{
+			Type:      domain.EventRoomCreated,
+			RoomID:    code,
+			Timestamp: time.Now(),
+		})
+
+		return &room, nil
 	}
 
-	room := domain.Room{
-		ID:         roomID,
-		Name:       name,
-		PlayerIDs:  []string{},
-		MaxPlayers: maxPlayers,
-	}
-
-	if err := svc.store.CreateRoom(ctx, room); err != nil {
-		return nil, error_handling.InternalErrorWrap("Could not create room", err)
-	}
-
-	svc.publishEvent(ctx, domain.Event{
-		Type:      domain.EventRoomCreated,
-		RoomID:    roomID,
-		Timestamp: time.Now(),
-	})
-
-	return &room, nil
+	return nil, error_handling.InternalError("Could not generate unique room code after 20 attempts")
 }
 
 func (svc *RoomService) GetRoom(ctx context.Context, roomID string) (*domain.Room, *error_handling.AppError) {

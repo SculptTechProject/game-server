@@ -261,22 +261,100 @@ ws.onmessage = (event) => {
 
 The server pushes events to all WebSocket clients connected to a room:
 
-| Event type | Description |
-|---|---|
-| `room_created` | A new room was created |
-| `player_joined` | A player joined the room |
+| Event type | Direction | Description |
+|---|---|---|
+| `room_created` | Server → Client | A new room was created |
+| `player_joined` | Server → Client | A player joined, payload includes `nickname` |
+| `player_left` | Server → Client | A player disconnected |
+| `player_moved` | Server → Client | A player moved, payload `{x, y}` |
+| `coin_collected` | Server → Client | A coin was collected, payload `{coinId}` |
+| `room_state` | Server → Client | Current positions of all players (sent on join) |
 
-**Event format:**
-```json
-{
-  "type": "player_joined",
-  "roomId": "660e8400-...",
-  "playerId": "550e8400-...",
-  "timestamp": "2026-05-10T12:00:00Z"
-}
+**Client → Server messages:**
+
+| Message type | Description |
+|---|---|
+| `{"type":"move","x":100,"y":200}` | Update player position |
+| `{"type":"collect","coinId":"c01"}` | Collect a coin |
+
+**Events are published via Redis pub/sub**, so the system scales horizontally.
+
+---
+
+## Game client
+
+A web-based 2D multiplayer game lives in `client/`.
+
+### Tech
+
+- **Vue 3** + **TypeScript** + **Vite**
+- Canvas 2D rendering
+- WebSocket real-time communication
+
+### Running
+
+```bash
+# Terminal 1 — start the Go server
+go run ./cmd/game-server
+
+# Terminal 2 — start the Vue dev server
+cd client && npm run dev
 ```
 
-Events are published via Redis pub/sub, so the system scales horizontally: any instance serving a room receives and broadcasts events.
+Then open **http://localhost:5173** in two browser tabs.
+
+### How to play
+
+1. Enter a **nickname**
+2. Leave **Room ID** empty to create a new room, or enter an existing room ID to join a friend
+3. Click **Play**
+4. Move your circle with **WASD** or **arrow keys**
+5. Collect golden **★ coins** to earn points
+6. Watch other players move in real-time
+
+### Game features
+
+| Feature | Description |
+|---|---|
+| **Real-time movement** | Position synced via WebSocket, ~20 updates/sec |
+| **Coins** | 30 coins spawn across the map, respawn after 5s |
+| **Score** | +10 points per coin, shown in HUD |
+| **Minimap** | Top-right corner shows full map with player dots |
+| **Particles** | Dust particles when walking, burst on coin collect |
+| **Player colors** | Each player gets a deterministic color from their ID |
+| **Nicknames** | Shown above each player circle |
+| **Camera** | Follows your player smoothly |
+| **Walls** | Brown border walls prevent leaving the map |
+| **Trees** | Decorative obstacles at the corners |
+| **Eyes** | Your character has cute eyes 👀 |
+
+### Game structure
+
+```
+client/
+├── index.html
+├── package.json
+├── vite.config.ts
+├── tsconfig.json
+├── src/
+│   ├── main.ts
+│   ├── App.vue              ← screen router (lobby / game)
+│   ├── style.css
+│   ├── components/
+│   │   ├── Lobby.vue        ← nickname & room input
+│   │   └── GameCanvas.vue   ← canvas rendering & game loop
+│   └── game/
+│       ├── types.ts         ← TypeScript interfaces
+│       └── websocket.ts     ← WebSocket client
+```
+
+### World
+
+- **Map size:** 2000 × 2000 px
+- **Camera:** follows your player (viewport fills the window)
+- **Boundaries:** brown walls, 24px thick
+- **30 coins** at fixed positions, golden with glow effect
+- **8 decorative trees** at map corners and edges
 
 ---
 
@@ -363,6 +441,20 @@ internal/
     ├── memory.go
     ├── memory_test.go
     └── postgres.go
+client/
+├── package.json
+├── vite.config.ts
+├── index.html
+└── src/
+    ├── main.ts
+    ├── App.vue
+    ├── style.css
+    ├── components/
+    │   ├── Lobby.vue
+    │   └── GameCanvas.vue
+    └── game/
+        ├── types.ts
+        └── websocket.ts
 Dockerfile
 docker-compose.yml
 ```
