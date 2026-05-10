@@ -196,7 +196,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "produces": [
-                    "text/plain"
+                    "application/json"
                 ],
                 "tags": [
                     "rooms"
@@ -250,6 +250,9 @@ const docTemplate = `{
             "properties": {
                 "name": {
                     "type": "string"
+                },
+                "max-players": {
+                    "type": "integer"
                 }
             }
         },
@@ -292,6 +295,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "max-players": {
+                    "type": "integer"
                 }
             }
         }

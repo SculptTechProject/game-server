@@ -189,7 +189,24 @@ export default defineComponent({
         ctx.lineWidth = 3
         ctx.stroke()
 
-        // Eyes
+        // Eyes - track nearest player
+        let lookDx = 0, lookDy = 0
+        let nearestDist = Infinity
+        for (const [otherPid, otherPos] of Object.entries(players.value)) {
+          if (otherPid === pid) continue
+          const dx = otherPos.x - pos.x, dy = otherPos.y - pos.y
+          const d = dx * dx + dy * dy
+          if (d < nearestDist) {
+            nearestDist = d
+            const len = Math.sqrt(d) || 1
+            lookDx = dx / len
+            lookDy = dy / len
+          }
+        }
+        const pupilOffset = 1.5
+        const pox = lookDx * pupilOffset
+        const poy = lookDy * pupilOffset
+
         ctx.fillStyle = "#fff"
         ctx.beginPath()
         ctx.arc(pos.x - 6, pos.y - 4, 4, 0, Math.PI * 2)
@@ -197,8 +214,8 @@ export default defineComponent({
         ctx.fill()
         ctx.fillStyle = "#222"
         ctx.beginPath()
-        ctx.arc(pos.x - 5, pos.y - 3, 2, 0, Math.PI * 2)
-        ctx.arc(pos.x + 7, pos.y - 3, 2, 0, Math.PI * 2)
+        ctx.arc(pos.x - 6 + pox, pos.y - 4 + poy, 2, 0, Math.PI * 2)
+        ctx.arc(pos.x + 6 + pox, pos.y - 4 + poy, 2, 0, Math.PI * 2)
         ctx.fill()
 
         // Nickname

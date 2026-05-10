@@ -52,7 +52,7 @@ Multiplayer game lobby server built with Go. Supports HTTP API, WebSocket real-t
 - **Redis 7** via `redis/go-redis/v9` (pub/sub for real-time events)
 - **WebSocket** via `gorilla/websocket`
 - **Swagger** via `swaggo/http-swagger`
-- **UUID** via `google/uuid`
+- **UUID** via `google/uuid` (player IDs only; room IDs use 4-digit codes via `crypto/rand`)
 
 ## Quick start
 
@@ -89,6 +89,9 @@ All via environment variables:
 
 If Redis is unavailable, the app starts with a warning and real-time features are disabled.
 
+# Demo
+![img.png](readme_imgs/demo.png)
+
 ## API
 
 ### Standard response format
@@ -120,6 +123,7 @@ All endpoints return JSON:
 |---|---|---|
 | `NOT_FOUND` | 404 | Resource not found |
 | `BAD_REQUEST` | 400 | Invalid input |
+| `VALIDATION_ERROR` | 400 | Validation failed |
 | `CONFLICT` | 409 | Duplicate or capacity exceeded |
 | `INTERNAL_ERROR` | 500 | Server-side failure |
 | `METHOD_NOT_ALLOWED` | 405 | Wrong HTTP method |
@@ -202,7 +206,7 @@ Response: `201 Created`
 Get room state including players.
 
 ```bash
-curl "http://localhost:8080/get-room?roomId=660e8400-e29b-41d4-a716-446655440001"
+curl "http://localhost:8080/get-room?roomId=7429"
 ```
 
 Response: `200 OK`
@@ -210,7 +214,7 @@ Response: `200 OK`
 {
   "success": true,
   "data": {
-    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "id": "7429",
     "name": "lobby",
     "playerIds": ["550e8400-e29b-41d4-a716-446655440000"],
     "max-players": 10
@@ -227,7 +231,7 @@ Join a player to a room.
 ```bash
 curl -X POST http://localhost:8080/join-room \
   -H "Content-Type: application/json" \
-  -d '{"roomId":"660e8400-...","playerId":"550e8400-..."}'
+  -d '{"roomId":"7429","playerId":"550e8400-..."}'
 ```
 
 Response: `200 OK`
@@ -249,7 +253,7 @@ Error cases: `400` (missing fields), `404` (room not found), `409` (already in r
 ### Connect
 
 ```js
-const ws = new WebSocket("ws://localhost:8080/ws?roomId=660e8400-...");
+const ws = new WebSocket("ws://localhost:8080/ws?roomId=7429");
 
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
@@ -268,7 +272,8 @@ The server pushes events to all WebSocket clients connected to a room:
 | `player_left` | Server → Client | A player disconnected |
 | `player_moved` | Server → Client | A player moved, payload `{x, y}` |
 | `coin_collected` | Server → Client | A coin was collected, payload `{coinId}` |
-| `room_state` | Server → Client | Current positions of all players (sent on join) |
+| `room_state` | Server → Client | Current positions and nicknames of all players (sent on join) |
+| `error` | Server → Client | An error occurred, payload `{message}` |
 
 **Client → Server messages:**
 

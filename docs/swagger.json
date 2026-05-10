@@ -190,7 +190,7 @@
                     "application/json"
                 ],
                 "produces": [
-                    "text/plain"
+                    "application/json"
                 ],
                 "tags": [
                     "rooms"
@@ -244,6 +244,9 @@
             "properties": {
                 "name": {
                     "type": "string"
+                },
+                "max-players": {
+                    "type": "integer"
                 }
             }
         },
@@ -286,6 +289,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "max-players": {
+                    "type": "integer"
                 }
             }
         }

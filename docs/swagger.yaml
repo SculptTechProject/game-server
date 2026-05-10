@@ -9,6 +9,8 @@ definitions:
     properties:
       name:
         type: string
+      max-players:
+        type: integer
     type: object
   domain.JoinRoomRequest:
     properties:
@@ -36,6 +38,8 @@ definitions:
         items:
           type: string
         type: array
+      max-players:
+        type: integer
     type: object
 host: localhost:8080
 info:
@@ -172,7 +176,7 @@ paths:
         schema:
           $ref: '#/definitions/domain.JoinRoomRequest'
       produces:
-      - text/plain
+      - application/json
       responses:
         "200":
           description: OK
